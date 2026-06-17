@@ -1,0 +1,27 @@
+# 富途年度账单 Excel 文件（包含个人财务信息）
+*年度账单*.xlsx
+data/*.xlsx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Output directory (example outputs can be committed)
+output/*.xlsx
+
+# Test artifacts
+test_output.*
+*.tmp
+
+# Skill files (optional, personal use)
+skills/
