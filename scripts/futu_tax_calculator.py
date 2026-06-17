@@ -35,7 +35,20 @@ import ssl
 # 0. 常量与配置
 # ═══════════════════════════════════════════════════════════════════
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
+
+# RSU FMV 配置文件路径（可选）
+RSU_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rsu_config.json')
+
+def load_rsu_config():
+    """加载 RSU FMV 配置文件"""
+    if os.path.exists(RSU_CONFIG_PATH):
+        try:
+            with open(RSU_CONFIG_PATH, 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return {}
 
 # 市场分类 (用于分市场统计)
 MARKET_CLASSIFICATION = {
@@ -412,10 +425,10 @@ def date_diff(d1, d2):
         return 999
 
 
-def find_asset_cost(mv, fund_flows, trading_records):
+def find_asset_cost(mv, fund_flows, trading_records, rsu_config=None):
     """
     查找非交易资产(IPO/RSU等)的成本基准
-    优先级: IPO扣款 > RSU税款反推 > 附近交易价格 > 0(需手动)
+    优先级: RSU配置文件 > IPO扣款 > RSU税款反推 > 附近交易价格 > 0(需手动)
     """
     mv_type = mv['type']
     remark = mv['remark']
@@ -426,7 +439,21 @@ def find_asset_cost(mv, fund_flows, trading_records):
 
     result = {'price': 0.0, 'fee': 0.0, 'source': 'unknown'}
 
-    # ── IPO 中签 ──
+    # ── 0) 查 RSU 配置文件 ──
+    if rsu_config and code in rsu_config:
+        for entry in rsu_config[code]:
+            cfg_date = entry['vest_date']
+            # 匹配日期和股数
+            if (cfg_date == mv_date.replace('-', '')[:8] or
+                abs(date_diff(cfg_date, mv_date)) <= 2):
+                if abs(entry['shares'] - mv_qty) < 1:
+                    result['price'] = entry['fmv']
+                    result['source'] = f'RSU配置(FMV={entry["fmv"]})'
+                    if entry.get('_note', '').startswith('*'):
+                        result['estimated'] = True
+                    return result
+
+    # ── 1) IPO 中签 ──
     if 'ipo' in mv_type.lower() or 'ipo' in remark.lower():
         for payment in fund_flows.get('ipo_payments', []):
             if (payment['direction'] == 'Out' and
@@ -481,7 +508,7 @@ def find_asset_cost(mv, fund_flows, trading_records):
 # ═══════════════════════════════════════════════════════════════════
 
 def calculate_all(trading_records, asset_movements, fund_flows,
-                  opening_positions, method='WMA'):
+                  opening_positions, method='WMA', rsu_config=None):
     """
     主计算函数
     method: 'WMA' (移动加权平均) 或 'FIFO' (先进先出)
@@ -512,7 +539,7 @@ def calculate_all(trading_records, asset_movements, fund_flows,
         if any(kw in mv['type'] for kw in ['账户升级', '账户迁移', '升级']):
             continue
 
-        cost_info = find_asset_cost(mv, fund_flows, trading_records)
+        cost_info = find_asset_cost(mv, fund_flows, trading_records, rsu_config)
         if cost_info.get('needs_manual'):
             warnings.append({
                 'code': mv['code'],
@@ -980,6 +1007,12 @@ def process_single_year(input_file, prior_year_file=None, output_file=None,
     assets = parse_asset_movements(wb['证券-资产进出'])
     flows = parse_fund_flows(wb['证券-资金进出'])
 
+    # 加载 RSU FMV 配置
+    rsu_config = load_rsu_config()
+    if rsu_config:
+        rsu_count = sum(len(v) for v in rsu_config.values())
+        print(f"  RSU配置: {rsu_count} 条FMV记录已加载")
+
     print(f"  交易记录: {len(trading)} 条")
     print(f"  股息相关: {len(flows['dividends'])} 条")
     print(f"  利息相关: {len(flows['interests'])} 条")
@@ -998,7 +1031,7 @@ def process_single_year(input_file, prior_year_file=None, output_file=None,
         prior_opening = parse_opening_positions(wb_prior['证券-持仓总览'], '期初')
 
         _, prior_trackers, _ = calculate_all(
-            prior_trading, prior_assets, prior_flows, prior_opening, method
+            prior_trading, prior_assets, prior_flows, prior_opening, method, rsu_config
         )
 
         for key, t in prior_trackers.items():
@@ -1034,7 +1067,7 @@ def process_single_year(input_file, prior_year_file=None, output_file=None,
     # 计算
     print(f"  计算 P/Q/R...")
     enriched, trackers, warnings = calculate_all(
-        trading, assets, flows, opening_positions, method
+        trading, assets, flows, opening_positions, method, rsu_config
     )
 
     total_R = sum(r['R'] for r in enriched)
