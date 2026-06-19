@@ -1,0 +1,18 @@
+{
+  "_说明": "RSU归属FMV配置文件模板。请将你的真实数据填入后重命名为rsu_config.json。此文件不会被git跟踪。",
+  "_填写方法": "FMV = 归属日市价。扣税金额可从券商RSU归属记录中获取。",
+
+  "股票代码": [
+    {"vest_date": "20230630", "shares": 0, "currency": "USD", "fmv": 0, "tax": 0, "_note": "示例: 归属日+股数+FMV+扣税"},
+    {"vest_date": "20231229", "shares": 0, "currency": "USD", "fmv": 0, "tax": 0, "_note": "FMV=扣税÷税率÷股数反推"}
+  ],
+
+  "_真实配置示例（请替换数据）": {
+    "FUTU": [
+      {"vest_date": "20230630", "shares": 975, "currency": "USD", "fmv": 0, "tax": 0, "_note": "请填入你的FMV"}
+    ],
+    "700": [
+      {"vest_date": "20210201", "shares": 159, "currency": "HKD", "fmv": 0, "tax_shares": 0, "_note": "请填入你的FMV"}
+    ]
+  }
+}

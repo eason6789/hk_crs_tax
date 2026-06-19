@@ -33,8 +33,8 @@ pip install openpyxl
 ```bash
 # 单年度计算（推荐同时提供上年文件以获得准确成本）
 python3 scripts/futu_tax_calculator.py \
-  2025_年度账单_11267892.xlsx \
-  2024_年度账单_11267892.xlsx \
+  2025_年度账单.xlsx \
+  2024_年度账单.xlsx \
   -o output/2025_税务审计底稿.xlsx
 
 # 批量处理所有年度

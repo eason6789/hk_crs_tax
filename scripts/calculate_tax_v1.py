@@ -966,9 +966,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
-  python calculate_tax.py 2025_年度账单_11267892.xlsx
-  python calculate_tax.py 2025_年度账单_11267892.xlsx 2024_年度账单_11267892.xlsx
-  python calculate_tax.py 2025_年度账单_11267892.xlsx -o 2025_税务计算结果.xlsx
+  python calculate_tax.py 2025_年度账单_XXXXX.xlsx
+  python calculate_tax.py 2025_年度账单_XXXXX.xlsx 2024_年度账单_XXXXX.xlsx
+  python calculate_tax.py 2025_年度账单_XXXXX.xlsx -o 2025_税务计算结果.xlsx
         """
     )
     parser.add_argument('input_file', help='当年度的富途年度账单 Excel 文件')

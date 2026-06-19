@@ -25,3 +25,4 @@ test_output.*
 
 # Skill files (optional, personal use)
 skills/
+scripts/rsu_config.json
